@@ -1,5 +1,7 @@
 package com.api.remittance.Entities;
 
+import java.time.LocalDateTime;
+
 import com.api.remittance.Enum.Currency;
 import com.api.remittance.Enum.TransactionStatus;
 
@@ -31,8 +33,10 @@ public class Transaction {
     private Currency currency;
 
     private TransactionStatus status;
-    
 
+    private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
     
     public Transaction() {
     }
@@ -43,6 +47,8 @@ public class Transaction {
         this.amount = amount;
         this.currency = currency;
         this.status = TransactionStatus.PENDING; // Default status when a transaction is created
+        this.createdAt = LocalDateTime.now(); // Set creation date to now
+        this.updatedAt = LocalDateTime.now(); // Set updated date to now
     }
 
     public Long getId() {
@@ -91,6 +97,22 @@ public class Transaction {
 
     public void setStatus(TransactionStatus status) {
         this.status = status;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 
     @Override

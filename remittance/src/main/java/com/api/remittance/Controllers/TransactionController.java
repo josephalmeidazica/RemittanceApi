@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.api.remittance.Entities.Transaction;
+import com.api.remittance.Enum.TransactionStatus;
+import com.api.remittance.Exceptions.InvalidTransactionStatusException;
 import com.api.remittance.Exceptions.TransactionNotFoundException;
 import com.api.remittance.Repositories.TransactionRepository;
 
@@ -56,6 +58,21 @@ public class TransactionController {
                     entity.setId(id);
                     return repository.save(entity);
                 });
+        
+        return entity;
+    }
+
+    @PutMapping("transactions/cancel/{id}")
+    public Transaction putMethodName(@PathVariable Long id) {
+        Transaction entity = repository.findById(id)
+                .orElseThrow(() -> new TransactionNotFoundException(id));
+
+        if (entity.getStatus() != TransactionStatus.PENDING) {
+            throw new InvalidTransactionStatusException(id, entity.getStatus());
+        }
+
+        entity.setStatus(TransactionStatus.CANCELLED);
+        repository.save(entity);
         
         return entity;
     }
