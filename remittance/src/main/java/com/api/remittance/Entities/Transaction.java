@@ -1,10 +1,12 @@
 package com.api.remittance.Entities;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.api.remittance.Enum.Currency;
 import com.api.remittance.Enum.TransactionStatus;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -20,11 +22,11 @@ public class Transaction {
     @Id 
     Long id;
 
-    @OneToOne
+    @OneToOne(cascade =  CascadeType.ALL)
     @JoinColumn(name = "sender_id", referencedColumnName = "id")
     private Wallet sender;
 
-    @OneToOne
+    @OneToOne(cascade =  CascadeType.ALL)
     @JoinColumn(name = "receiver_id", referencedColumnName = "id")
     private Wallet receiver;
 
@@ -34,7 +36,7 @@ public class Transaction {
 
     private TransactionStatus status;
 
-    private LocalDateTime createdAt;
+    private LocalDate createdAt;
 
     private LocalDateTime updatedAt;
     
@@ -47,7 +49,7 @@ public class Transaction {
         this.amount = amount;
         this.currency = currency;
         this.status = TransactionStatus.PENDING; // Default status when a transaction is created
-        this.createdAt = LocalDateTime.now(); // Set creation date to now
+        this.createdAt = LocalDate.now(); // Set creation date to now
         this.updatedAt = LocalDateTime.now(); // Set updated date to now
     }
 
@@ -99,11 +101,11 @@ public class Transaction {
         this.status = status;
     }
 
-    public LocalDateTime getCreatedAt() {
+    public LocalDate getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(LocalDate createdAt) {
         this.createdAt = createdAt;
     }
 

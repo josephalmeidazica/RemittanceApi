@@ -31,11 +31,11 @@ public class TransactionLimit {
         this.id = id;
     }
 
-    public UserType getuserType() {
+    public UserType getUserType() {
         return userType;
     }
 
-    public void setuserType(UserType userType) {
+    public void setUserType(UserType userType) {
         this.userType = userType;
     }
 

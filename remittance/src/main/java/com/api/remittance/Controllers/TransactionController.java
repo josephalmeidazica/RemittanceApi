@@ -25,7 +25,7 @@ public class TransactionController {
 
     // Aggregte root
     // tag::get-aggregate-root[]
-    @GetMapping("/users")
+    @GetMapping("/transactions")
     List<Transaction> all() {
         return repository.findAll();
     }

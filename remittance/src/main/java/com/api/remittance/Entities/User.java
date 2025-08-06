@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import com.api.remittance.Enum.UserType;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -17,14 +18,19 @@ public class User {
     @Id
     Long id;
     
+    @Column(nullable = false)
     private String name;
     
+    @Column(nullable = false)
     private String email;
     
+    @Column(nullable = false)
     private UserType userType;
     
+    @Column(nullable = false)
     private String password;
     
+    @Column(nullable = false)
     private String document;
 
     public User() {
