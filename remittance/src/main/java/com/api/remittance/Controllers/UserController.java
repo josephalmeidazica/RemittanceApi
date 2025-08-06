@@ -25,7 +25,7 @@ public class UserController {
 
     // Aggregte root
     // tag::get-aggregate-root[]
-    // @GetMapping("/users")
+    @GetMapping("/users")
     List<User> all() {
         return repository.findAll();
     }

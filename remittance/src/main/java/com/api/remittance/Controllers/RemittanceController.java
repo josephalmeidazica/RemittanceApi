@@ -3,22 +3,29 @@ package com.api.remittance.Controllers;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.api.remittance.Entities.Transaction;
+import com.api.remittance.Entities.TransactionLimit;
 import com.api.remittance.Entities.User;
 import com.api.remittance.Entities.Wallet;
 import com.api.remittance.Enum.Currency;
 import com.api.remittance.Enum.TransactionStatus;
 import com.api.remittance.Exceptions.InsuficientBalanceException;
 import com.api.remittance.Exceptions.InvalidTransactionStatusException;
+import com.api.remittance.Exceptions.LimitNotFoundException;
 import com.api.remittance.Exceptions.TransactionNotFoundException;
+import com.api.remittance.Exceptions.TransactionOutOfLimitException;
 import com.api.remittance.Exceptions.UserNotFoundException;
+import com.api.remittance.Exceptions.WalletNotFoundException;
 import com.api.remittance.Exceptions.WalletNotFoundForUserAndCurrencyException;
+import com.api.remittance.Repositories.TransactionLimitRepository;
 import com.api.remittance.Repositories.TransactionRepository;
 import com.api.remittance.Repositories.UserRepository;
 import com.api.remittance.Repositories.WalletRepository;
 import com.api.remittance.Requests.RemittanceRequest;
 import com.api.remittance.Services.PriceService;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,15 +38,18 @@ public class RemittanceController {
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
     private final UserRepository userRepository;
+    private final TransactionLimitRepository transactionLimitRepository;
 
     public RemittanceController(PriceService priceService, 
                                 WalletRepository walletRepository,
                                 TransactionRepository transactionRepository,
-                                UserRepository userRepository) {
+                                UserRepository userRepository,
+                                TransactionLimitRepository transactionLimitRepository) {
         this.priceService = priceService;
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
         this.userRepository = userRepository;
+        this.transactionLimitRepository = transactionLimitRepository;
     }
 
     @PostMapping("remittance")
@@ -68,6 +78,13 @@ public class RemittanceController {
 
         // Calculate the price based on the current exchange rate
         Double price = priceService.getPrice();
+
+        // Check if the sender's total transaction amount is within the limit
+        if (!checkSenderTransactionLimit(sender, price)) {
+            transaction.setStatus(TransactionStatus.FAILED);
+            transactionRepository.save(transaction);
+            throw new LimitNotFoundException(sender.getUserType());
+        }
         Double correctedAmount = 0.0;
         // Send BRL to USD wallet
         if (entity.getCurrency().equals(Currency.BRL)) {
@@ -126,6 +143,30 @@ public class RemittanceController {
 
     private Currency getReceiverCurrency(Currency senderCurrency) {
         return senderCurrency == Currency.BRL ? Currency.USD : Currency.BRL;
+    }
+
+    private Boolean checkSenderTransactionLimit(User user, Double dolarPrice){
+        List<Wallet> senderWallets = walletRepository.findByUserId(user.getId())
+            .orElseThrow(() -> new WalletNotFoundException(user.getId()));
+
+        Double totalBalance = 0.0;
+
+        for (Wallet wallet : senderWallets) {
+            List<Transaction> transactions = transactionRepository.findBySenderIdAndStatusAndCreatedAt(wallet.getId(), TransactionStatus.COMPLETED, LocalDate.now())
+                .orElseThrow(() -> new TransactionNotFoundException(user.getId()));
+            for (Transaction transaction : transactions) {
+                if (transaction.getCurrency() == Currency.USD) {
+                    totalBalance += transaction.getAmount() * dolarPrice;
+                } else if (transaction.getCurrency() == Currency.BRL) {
+                    totalBalance += transaction.getAmount();
+                }
+            }
+        }
+
+        TransactionLimit transactionLimit = transactionLimitRepository.findByUserType(user.getUserType())
+            .orElseThrow(() -> new TransactionOutOfLimitException(user.getId(),LocalDate.now()));
+        
+        return totalBalance <= transactionLimit.getLimitAmount();
     }
     
 }
